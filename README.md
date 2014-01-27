@@ -1,4 +1,0 @@
-heis
-====
-
-Heisprosjekt sanntidsprogrammering
