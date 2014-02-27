@@ -14,61 +14,81 @@ func CheckError(err error) {
 	}
 }
 
-func SendHeartbeat(conn *net.UDPConn, addr *net.UDPAddr) {
-	conn.WriteToUDP([]byte, addr)
-}
-
-func CheckHeartbeat(conn *net.UDPConn) {
-	
-}
-
-
-var data = []byte("test")
-var backup, master bool
 
 func main() {
-	var name string
 	
 	fmt.Println(len(os.Args))
 	
+	/*
 	if len(os.Args) == 2 {
-		name = "127.0.0.1:15000"
-		fmt.Println("test1")
-		backup = true
-		master = false
+	   // If clone
+	   addr, err := net.ResolveTCPAddr("tcp", ":1200")
+	   CheckError(err)
+	   
+	   listener, err := net.ListenTCP("tcp", addr)
+	   CheckError(err)
+	   
+	   conn, err := listener.Accept()
+	   CheckError(err)
+	   
+	   master = false
+	   backup = true
+	   fmt.Println("test1")
+	   
 	} else {
-		name = "129.241.187.255:15000"
-		fmt.Println("test2")
-		backup = false
-		master = true
+	   // If original instance
+   	addr, err := net.ResolveTCPAddr("tcp", ":1200")
+	   CheckError(err)
+	   
+	   conn, err := net.DialTCP("tcp", nil, addr)
+	   CheckError(err)
+	   
+	   master = true
+	   backup = false
+      fmt.Println("test2")
 	}
-
-	addr, err := net.ResolveUDPAddr("udp", name)
-	conn, err := net.ListenUDP("udp", addr)
-	CheckError(err)
-	fmt.Println("test3")
-	
-	conn.WriteToUDP(data, addr)
-	buf := make([]byte, 512)
-	conn.ReadFromUDP(buf)
-	fmt.Println("test4")
-	
-	
+   */
+   
+   var master, backup bool
+   var conn *net.UDPConn
+   addr, err := net.ResolveUDPAddr("udp", ":1200")
+   CheckError(err)
+   
+   
+   if len(os.Args) == 2 {
+      // clone
+      conn, err = net.DialUDP("udp", nil, addr)
+      
+      master = false
+      fmt.Println("test1")
+   } else {
+      // original instance
+      conn, err = net.ListenUDP("udp", addr)
+      CheckError(err)
+      
+      conn.Write([]byte("test"))
+      
+      master = true
+      fmt.Println("test2")
+   }
 	
 	for {
-		switch backup {
+		switch master {
 		case true:
+		   //conn.Write([]byte("test"))
 			fmt.Println("test5")
 		case false:
 			cmd := exec.Command("mate-terminal", "-x", "go", "run",  "phoenix.go", "slave")
-			err = cmd.Start()
+			err := cmd.Start()
 			CheckError(err)
-			backup = true
-			master = true
+
 			fmt.Println("test6")
 		}
 		
-		
+		switch backup {
+		case true:
+		case false:
+		}
 	}
 	
 	fmt.Println("end")
