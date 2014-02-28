@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"os"
 	"net"
+	"strconv"
+	"time"
 )
 
 func CheckError(err error) {
@@ -14,25 +16,26 @@ func CheckError(err error) {
 	}
 }
 
-func CreateSlave() {
-   number = str(number)
-   cmd := exec.Command("mate-terminal", "-x", "go", "run",  "phoenix.go", number)
+func CreateSlave(i int) {
+   strI := strconv.Itoa(i)
+   cmd := exec.Command("mate-terminal", "-x", "go", "run",  "phoenix.go", strI)
 	err := cmd.Start()
 	CheckError(err)
 }
 
-func Broadcast(conn *net.UDPConn) {
-   
-}
-
-func ReceiveBroadcast(conn *net.UDPConn) int {
-   _, _, err := conn.ReadFromUDP
+func ReceiveCount(i int, conn *net.UDPConn) (int, error) {
+   b := make([]byte, 1)
+   _, _, err := conn.ReadFromUDP(b)
+   i = i + 1
+   return i, err
 }
 
 func Count(i int, conn *net.UDPConn) int {
+   fmt.Println(i)
    b := make([]byte, 1)
    conn.Write(b)
-   return ++i
+   i = i + 1
+   return i
 }
 
 func main() {
@@ -53,6 +56,24 @@ func main() {
    }
 	
 	switch master {
+	case false:
+      // Establish listen-socket
+      service := ":12001"
+      addr, err := net.ResolveUDPAddr("udp", service)
+      CheckError(err)
+      
+      conn, err := net.ListenUDP("udp", addr)
+      conn.SetDeadline(time.Now())
+      CheckError(err)
+      
+      // Receiving number broadcast and checking if master is alive
+      for err.Timeout() == true {
+        number, err := ReceiveCount(number, conn)
+      }
+      master = true
+      fmt.Println("test6")
+      fallthrough
+	
 	case true:
 	   // Establish broadcast-socket on first run
       service := ":12000"
@@ -65,26 +86,8 @@ func main() {
       CreateSlave()
 		   
       for {
-         number = Count() // oppdateres den globale?
+         number = Count(number, conn) // oppdateres den globale?
       }
-		fmt.Println("test5")
-		
-   case false:
-      // Establish listen-socket
-      service := ":12001"
-      addr, err := net.ResolveUDPAddr("udp", service)
-      CheckError(err)
-      
-      conn, err := net.ListenUDP("udp", addr)
-      CheckError(err)
-      
-      // Receiving number broadcast and checking if master is alive
-      for alive {
-         number = ReceiveBroadcast(conn)
-         alive = CheckAlive
-      }
-
-		fmt.Println("test6")
 	}
 	
 	fmt.Println("end")
