@@ -14,81 +14,77 @@ func CheckError(err error) {
 	}
 }
 
+func CreateSlave() {
+   number = str(number)
+   cmd := exec.Command("mate-terminal", "-x", "go", "run",  "phoenix.go", number)
+	err := cmd.Start()
+	CheckError(err)
+}
+
+func Broadcast(conn *net.UDPConn) {
+   
+}
+
+func ReceiveBroadcast(conn *net.UDPConn) int {
+   _, _, err := conn.ReadFromUDP
+}
+
+func Count(i int, conn *net.UDPConn) int {
+   b := make([]byte, 1)
+   conn.Write(b)
+   return ++i
+}
 
 func main() {
 	
-	fmt.Println(len(os.Args))
-	
-	/*
-	if len(os.Args) == 2 {
-	   // If clone
-	   addr, err := net.ResolveTCPAddr("tcp", ":1200")
-	   CheckError(err)
-	   
-	   listener, err := net.ListenTCP("tcp", addr)
-	   CheckError(err)
-	   
-	   conn, err := listener.Accept()
-	   CheckError(err)
-	   
-	   master = false
-	   backup = true
-	   fmt.Println("test1")
-	   
-	} else {
-	   // If original instance
-   	addr, err := net.ResolveTCPAddr("tcp", ":1200")
-	   CheckError(err)
-	   
-	   conn, err := net.DialTCP("tcp", nil, addr)
-	   CheckError(err)
-	   
-	   master = true
-	   backup = false
-      fmt.Println("test2")
-	}
-   */
-   
-   var master, backup bool
-   var conn *net.UDPConn
-   addr, err := net.ResolveUDPAddr("udp", ":1200")
-   CheckError(err)
-   
+   fmt.Println(len(os.Args))
+	var master bool
+	var number int
    
    if len(os.Args) == 2 {
-      // clone
-      conn, err = net.DialUDP("udp", nil, addr)
-      
+      // clone      
       master = false
       fmt.Println("test1")
    } else {
       // original instance
-      conn, err = net.ListenUDP("udp", addr)
-      CheckError(err)
-      
-      conn.Write([]byte("test"))
-      
       master = true
+      number := 0
       fmt.Println("test2")
    }
 	
-	for {
-		switch master {
-		case true:
-		   //conn.Write([]byte("test"))
-			fmt.Println("test5")
-		case false:
-			cmd := exec.Command("mate-terminal", "-x", "go", "run",  "phoenix.go", "slave")
-			err := cmd.Start()
-			CheckError(err)
+	switch master {
+	case true:
+	   // Establish broadcast-socket on first run
+      service := ":12000"
+      addr, err := net.ResolveUDPAddr("udp", service)
+      CheckError(err)
 
-			fmt.Println("test6")
-		}
+      conn, err := net.ListenUDP("udp", addr)
+      CheckError(err)
+
+      CreateSlave()
+		   
+      for {
+         number = Count() // oppdateres den globale?
+      }
+		fmt.Println("test5")
 		
-		switch backup {
-		case true:
-		case false:
-		}
+   case false:
+      // Establish listen-socket
+      service := ":12001"
+      addr, err := net.ResolveUDPAddr("udp", service)
+      CheckError(err)
+      
+      conn, err := net.ListenUDP("udp", addr)
+      CheckError(err)
+      
+      // Receiving number broadcast and checking if master is alive
+      for alive {
+         number = ReceiveBroadcast(conn)
+         alive = CheckAlive
+      }
+
+		fmt.Println("test6")
 	}
 	
 	fmt.Println("end")
