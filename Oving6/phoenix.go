@@ -26,21 +26,24 @@ func CreateSlave(i int) {
 func ReceiveCount(i int, conn *net.UDPConn) (int, error) {
    b := make([]byte, 1)
    _, _, err := conn.ReadFromUDP(b)
+   //fmt.Println(err)
    i = i + 1
+   conn.SetReadDeadline(time.Now().Add(time.Second))
    return i, err
 }
 
-func Count(i int, conn *net.UDPConn) int {
+func Count(i int, conn *net.UDPConn, a *net.UDPAddr) int {
    fmt.Println(i)
    b := make([]byte, 1)
-   conn.Write(b)
+   conn.WriteToUDP(b, a)
    i = i + 1
+   time.Sleep(500 * time.Millisecond)
    return i
 }
 
 func main() {
 	
-   fmt.Println(len(os.Args))
+   //fmt.Println(len(os.Args))
 	var master bool
 	var number int
    
@@ -51,24 +54,24 @@ func main() {
    } else {
       // original instance
       master = true
-      number := 0
+      number = 0
       fmt.Println("test2")
    }
 	
 	switch master {
 	case false:
       // Establish listen-socket
-      service := ":12001"
-      addr, err := net.ResolveUDPAddr("udp", service)
+      laddr, err := net.ResolveUDPAddr("udp", ":12001")
       CheckError(err)
       
-      conn, err := net.ListenUDP("udp", addr)
-      conn.SetDeadline(time.Now())
+      conn, err := net.ListenUDP("udp", laddr)
+      conn.SetReadDeadline(time.Now().Add(time.Second))
       CheckError(err)
-      
+     
+      fmt.Println("test3")
       // Receiving number broadcast and checking if master is alive
-      for  {
-        number, err := ReceiveCount(number, conn)
+      for err == nil {
+         number, err = ReceiveCount(number, conn)
       }
       master = true
       fmt.Println("test6")
@@ -76,19 +79,17 @@ func main() {
 	
 	case true:
 	   // Establish broadcast-socket on first run
-      service := ":12000"
-      addr, err := net.ResolveUDPAddr("udp", service)
+      laddr, err := net.ResolveUDPAddr("udp", ":12000")
+      baddr, err := net.ResolveUDPAddr("udp", "localhost:12001")
       CheckError(err)
 
-      conn, err := net.ListenUDP("udp", addr)
+      conn, err := net.ListenUDP("udp", laddr)
       CheckError(err)
 
-      CreateSlave()
+      CreateSlave(number)
 		   
       for {
-         number = Count(number, conn) // oppdateres den globale?
+         number = Count(number, conn, baddr)
       }
 	}
-	
-	fmt.Println("end")
 }
